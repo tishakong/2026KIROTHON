@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>학점교류 매칭 MVP</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>학점교류 매칭 MVP</h1>
+    <p class="sub">신촌 3개 대학(연세·서강·이화) 강의 매칭 + 신청 일정</p>
+  </header>
+
+  <main>
+    <section class="search">
+      <form id="search-form">
+        <input
+          id="q"
+          name="q"
+          type="text"
+          placeholder="듣고 싶은 강의명을 입력하세요 (예: 자료구조)"
+          autocomplete="off"
+          required
+        />
+        <button type="submit">검색</button>
+      </form>
+    </section>
+
+    <section class="grid">
+      <div class="col">
+        <h2>매칭 결과</h2>
+        <div id="results" class="results">
+          <p class="muted">검색어를 입력하면 추천 강의가 여기에 표시됩니다.</p>
+        </div>
+
+        <h2>신청 안내</h2>
+        <div id="apply-info" class="apply-info"></div>
+
+        <h2>최근 공지사항</h2>
+        <ul id="notices" class="notices"></ul>
+      </div>
+
+      <div class="col">
+        <h2>검색 기록</h2>
+        <ul id="history" class="history"></ul>
+
+        <h2>마감일 캘린더</h2>
+        <div id="calendar"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
