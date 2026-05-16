@@ -79,10 +79,7 @@
 <body>
   <div class="header">
     <h1>🎓 학점교류 AI 에이전트</h1>
-    <div class="header-right">
-      <div class="bell">🔔<span class="bell-badge"></span></div>
-      <div class="avatar">김</div>
-    </div>
+    <div class="header-right"></div>
   </div>
 
   <div class="main">
@@ -107,27 +104,7 @@
 
       <div class="deadlines">
         <h3>📅 다가오는 마감</h3>
-        <div class="deadline-item">
-          <span class="deadline-badge">D-7</span>
-          <div>
-            <div class="deadline-info">학점교류 신청 마감</div>
-            <div class="deadline-univ">연세대학교</div>
-          </div>
-        </div>
-        <div class="deadline-item">
-          <span class="deadline-badge soon">D-14</span>
-          <div>
-            <div class="deadline-info">서류 제출 마감</div>
-            <div class="deadline-univ">이화여자대학교</div>
-          </div>
-        </div>
-        <div class="deadline-item">
-          <span class="deadline-badge soon">D-21</span>
-          <div>
-            <div class="deadline-info">학점교류 신청 마감</div>
-            <div class="deadline-univ">서강대학교</div>
-          </div>
-        </div>
+        <p style="color:#86868b; font-size:14px; padding:12px 0;">로딩 중...</p>
       </div>
     </div>
 
@@ -148,63 +125,171 @@
       </div>
 
       <div class="results-section">
-        <h3>🎯 추천 과목</h3>
-        
-        <div class="course-card">
-          <div class="card-header">
-            <span class="card-univ">연세대학교 · 컴퓨터과학과</span>
-            <span class="card-badge">✓ 인정가능</span>
-          </div>
-          <div class="card-title">자료구조론</div>
-          <div class="card-desc">선형 및 비선형 자료구조의 개념과 구현. 배열, 연결리스트, 스택, 큐, 트리, 그래프 등을 다루며 각 자료구조의 시간복잡도를 분석합니다.</div>
-          <div class="card-meta">
-            <span>📚 3학점</span>
-            <span>👤 김교수</span>
-            <span>🕐 화/목 10:30-12:00</span>
-          </div>
-          <div class="card-docs">
-            <span>📋 필요서류:</span>
-            <div class="doc-list">수강신청서, 성적증명서, 학점교류신청서</div>
-          </div>
-        </div>
-
-        <div class="course-card">
-          <div class="card-header">
-            <span class="card-univ">이화여자대학교 · 컴퓨터공학과</span>
-            <span class="card-badge">✓ 인정가능</span>
-          </div>
-          <div class="card-title">알고리즘설계</div>
-          <div class="card-desc">분할정복, 동적프로그래밍, 그리디 알고리즘 등 핵심 알고리즘 설계 기법을 학습하고 실제 문제에 적용합니다.</div>
-          <div class="card-meta">
-            <span>📚 3학점</span>
-            <span>👤 박교수</span>
-            <span>🕐 월/수 13:00-14:30</span>
-          </div>
-          <div class="card-docs">
-            <span>📋 필요서류:</span>
-            <div class="doc-list">학점교류신청서, 재학증명서</div>
-          </div>
-        </div>
-
-        <div class="course-card">
-          <div class="card-header">
-            <span class="card-univ">서강대학교 · 컴퓨터공학과</span>
-            <span class="card-badge">✓ 인정가능</span>
-          </div>
-          <div class="card-title">데이터구조와 알고리즘</div>
-          <div class="card-desc">자료구조와 알고리즘의 기초부터 고급 주제까지 통합적으로 다루는 과목. 실습 중심의 프로젝트 기반 학습.</div>
-          <div class="card-meta">
-            <span>📚 3학점</span>
-            <span>👤 이교수</span>
-            <span>🕐 화/목 15:00-16:30</span>
-          </div>
-          <div class="card-docs">
-            <span>📋 필요서류:</span>
-            <div class="doc-list">수강신청서, 학점교류신청서, 성적증명서</div>
-          </div>
-        </div>
+        <h3>🎯 과목을 검색해보세요</h3>
+        <p style="color:#86868b; padding:20px 0;">위 검색창에 듣고 싶은 과목명을 입력하면 매칭 결과가 여기에 표시됩니다.</p>
       </div>
     </div>
   </div>
+  <script>
+    const API_BASE = "http://localhost:8000";
+
+    // DOM 요소 캐싱
+    const searchInput = document.querySelector(".search-bar input");
+    const searchBtn = document.querySelector(".search-bar button");
+    const resultsSection = document.querySelector(".results-section");
+    const filterChips = document.querySelectorAll(".chip");
+
+    let currentFilter = "전체";
+    let lastResults = [];
+
+    // 대학 ID → 한글 매핑
+    const UNIV_MAP = {
+      yonsei: "연세대학교",
+      sogang: "서강대학교",
+      hongik: "홍익대학교",
+      sookmyung: "숙명여자대학교",
+      ewha: "이화여자대학교",
+    };
+
+    // 검색 실행
+    async function doSearch(query) {
+      if (!query.trim()) return;
+      resultsSection.innerHTML = `<h3>🔍 검색 중...</h3>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        lastResults = data.matches || [];
+        renderResults(lastResults, data.apply_info || []);
+      } catch (err) {
+        resultsSection.innerHTML = `<h3>⚠️ 오류</h3><p>${err.message}</p>`;
+      }
+    }
+
+    // 결과 렌더링
+    function renderResults(matches, applyInfo) {
+      // 필터 적용
+      let filtered = matches;
+      if (currentFilter !== "전체") {
+        filtered = matches.filter((m) => {
+          const univName = UNIV_MAP[m.course.university_id] || m.course.university_id;
+          return univName.includes(currentFilter);
+        });
+      }
+
+      if (filtered.length === 0) {
+        resultsSection.innerHTML = `<h3>🎯 검색 결과</h3><p style="color:#86868b; padding:20px 0;">일치하는 과목이 없습니다.</p>`;
+        return;
+      }
+
+      // 대학별 서류 정보 맵
+      const applyMap = {};
+      for (const info of applyInfo) {
+        applyMap[info.id] = info;
+      }
+
+      let html = `<h3>🎯 검색 결과 (${filtered.length}건)</h3>`;
+      for (const m of filtered) {
+        const course = m.course;
+        const univName = UNIV_MAP[course.university_id] || course.university_id;
+        const dept = course.department || "";
+        const credits = course.credits ? `📚 ${course.credits}학점` : "";
+        const desc = course.description || m.reason || "";
+        const info = applyMap[course.university_id];
+        const docs = info && info.documents.length > 0
+          ? `<div class="card-docs"><span>📋 필요서류:</span><div class="doc-list">${info.documents.join(", ")}</div></div>`
+          : "";
+        const applyEnd = info && info.apply_end
+          ? `<span>📅 마감: ${info.apply_end}</span>`
+          : "";
+
+        html += `
+          <div class="course-card">
+            <div class="card-header">
+              <span class="card-univ">${univName}${dept ? " · " + dept : ""}</span>
+              <span class="card-badge">✓ 인정가능</span>
+            </div>
+            <div class="card-title">${escapeHtml(course.title)}</div>
+            <div class="card-desc">${escapeHtml(desc)}</div>
+            <div class="card-meta">
+              ${credits ? `<span>${credits}</span>` : ""}
+              ${applyEnd}
+              ${course.source_url ? `<a href="${course.source_url}" target="_blank" style="color:#007aff;">상세보기</a>` : ""}
+            </div>
+            ${docs}
+          </div>`;
+      }
+      resultsSection.innerHTML = html;
+    }
+
+    // XSS 방지용 이스케이프
+    function escapeHtml(str) {
+      if (!str) return "";
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // 캘린더 일정 로드
+    async function loadCalendar() {
+      try {
+        const res = await fetch(`${API_BASE}/api/calendar`);
+        if (!res.ok) return;
+        const events = await res.json();
+        renderDeadlines(events);
+      } catch (err) {
+        console.warn("캘린더 로드 실패:", err.message);
+      }
+    }
+
+    // 마감 일정 렌더링
+    function renderDeadlines(events) {
+      const deadlinesEl = document.querySelector(".deadlines");
+      if (!events.length) return;
+
+      const today = new Date();
+      const upcoming = events
+        .map((e) => ({ ...e, endDate: new Date(e.end) }))
+        .filter((e) => e.endDate >= today)
+        .sort((a, b) => a.endDate - b.endDate)
+        .slice(0, 5);
+
+      if (!upcoming.length) return;
+
+      let html = `<h3>📅 다가오는 마감</h3>`;
+      for (const ev of upcoming) {
+        const dDay = Math.ceil((ev.endDate - today) / (1000 * 60 * 60 * 24));
+        const badgeClass = dDay <= 7 ? "deadline-badge" : "deadline-badge soon";
+        html += `
+          <div class="deadline-item">
+            <span class="${badgeClass}">D-${dDay}</span>
+            <div>
+              <div class="deadline-info">${escapeHtml(ev.title)}</div>
+              ${ev.url ? `<a href="${ev.url}" target="_blank" style="font-size:12px; color:#007aff;">신청 바로가기</a>` : ""}
+            </div>
+          </div>`;
+      }
+      deadlinesEl.innerHTML = html;
+    }
+
+    // 이벤트 바인딩
+    searchBtn.addEventListener("click", () => doSearch(searchInput.value));
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSearch(searchInput.value);
+    });
+
+    filterChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        filterChips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        currentFilter = chip.textContent.trim();
+        if (lastResults.length) renderResults(lastResults, []);
+      });
+    });
+
+    // 초기 로드: 캘린더 일정
+    loadCalendar();
+  </script>
 </body>
 </html>
